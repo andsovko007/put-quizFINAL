@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 const TG = window.Telegram?.WebApp;
 const IS_TG = !!TG;
 // Замени на username своего бота перед деплоем
-const TG_BOT_LINK = "https://t.me/YOUR_BOT_USERNAME?start=quiz_result";
+const TG_BOT_LINK = "https://t.me/Sovkoandreiwaybot?start=quiz_result";
 
 // ========== ВОПРОСЫ ==========
 const QUESTIONS = [
