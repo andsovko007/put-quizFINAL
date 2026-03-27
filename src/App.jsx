@@ -3,7 +3,6 @@ import { useState, useEffect } from "react";
 // ========== НАСТРОЙКИ ==========
 const TG = window.Telegram?.WebApp;
 const IS_TG = !!TG;
-// Замени на username своего бота перед деплоем
 const TG_BOT_LINK = "https://t.me/Sovkoandreiwaybot?start=quiz_result";
 
 // ========== ВОПРОСЫ ==========
@@ -199,67 +198,165 @@ function getResult(scores) {
   return winner;
 }
 
+function buildQuizPayload({ result, scores, answers, qualification, userName }) {
+  const telegramIntroMap = {
+    burnout: "**Главный стопор у тебя — перегрев.**",
+    money: "**Главный стопор у тебя — деньги не идут.**",
+    me: "**Главный стопор у тебя — всё держится на тебе.**",
+    chaos: "**Главный стопор у тебя — хаос и ручной режим.**",
+  };
+
+  const telegramWhyMap = {
+    burnout: "По ответам видно: напряжение стало фоном, а система уже работает дороже, чем должна.",
+    money: "По ответам видно: где-то между вниманием, интересом и покупкой у тебя сейчас дыра.",
+    me: "По ответам видно: ключевые вещи всё ещё слишком сильно завязаны на тебя.",
+    chaos: "По ответам видно: система живёт по срочности и ручному режиму, а не по понятному контуру.",
+  };
+
+  const telegramNextMap = {
+    burnout: "Из этого состояния ты уже не усиливаешь рост, а обслуживаешь перегруз.",
+    money: "Из-за этого усилий много, а деньги идут нестабильно.",
+    me: "Из-за этого рост начинает ощущаться не как свобода, а как расширяющаяся зона обслуживания.",
+    chaos: "Из-за этого энергия уходит не в рост, а в переключения, тушение и повторные решения.",
+  };
+
+  return {
+    type: "quiz_result",
+    quiz_version: "v1",
+    stopor_code: result,
+    scores,
+    answers,
+    qualification,
+    result_variant: result,
+    result_payload: {
+      telegram_intro: telegramIntroMap[result] || "",
+      telegram_why: telegramWhyMap[result] || "",
+      telegram_next: telegramNextMap[result] || "",
+      user_name: userName || "",
+    },
+    cta_action: "continue_tg",
+    timestamp: Date.now(),
+  };
+}
+
+function openTelegramBot() {
+  if (IS_TG && TG?.openTelegramLink) {
+    TG.openTelegramLink(TG_BOT_LINK);
+  } else {
+    window.open(TG_BOT_LINK, "_blank");
+  }
+}
+
 // ========== COMPONENTS ==========
 
 function StartScreen({ onStart }) {
   const [v, setV] = useState(false);
-  useEffect(() => { setTimeout(() => setV(true), 100); }, []);
+  useEffect(() => {
+    const t = setTimeout(() => setV(true), 100);
+    return () => clearTimeout(t);
+  }, []);
 
   return (
-    <div style={{
-      minHeight: "100dvh", display: "flex", flexDirection: "column",
-      justifyContent: "center", padding: "40px 24px",
-      opacity: v ? 1 : 0, transform: v ? "none" : "translateY(20px)",
-      transition: "all 0.6s ease"
-    }}>
+    <div
+      style={{
+        minHeight: "100dvh",
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "center",
+        padding: "40px 24px",
+        opacity: v ? 1 : 0,
+        transform: v ? "none" : "translateY(20px)",
+        transition: "all 0.6s ease",
+      }}
+    >
       <div style={{ marginBottom: 20 }}>
-        <span style={{
-          fontSize: 11, letterSpacing: 3, textTransform: "uppercase",
-          color: "#FF6B4A", fontWeight: 600
-        }}>ПУТЬ / диагностика</span>
+        <span
+          style={{
+            fontSize: 11,
+            letterSpacing: 3,
+            textTransform: "uppercase",
+            color: "#FF6B4A",
+            fontWeight: 600,
+          }}
+        >
+          ПУТЬ / диагностика
+        </span>
       </div>
 
-      <h1 style={{
-        fontSize: 30, lineHeight: 1.15, fontWeight: 800,
-        color: "#F5F5F0", marginBottom: 12
-      }}>
+      <h1
+        style={{
+          fontSize: 30,
+          lineHeight: 1.15,
+          fontWeight: 800,
+          color: "#F5F5F0",
+          marginBottom: 12,
+        }}
+      >
         Почему ты много делаешь, а клиентов, продаж и денег больше не становится
       </h1>
 
-      <p style={{
-        fontSize: 16, lineHeight: 1.55, color: "#999", marginBottom: 18
-      }}>
+      <p
+        style={{
+          fontSize: 16,
+          lineHeight: 1.55,
+          color: "#999",
+          marginBottom: 18,
+        }}
+      >
         Для предпринимателей и экспертов, у которых всё вроде движется, но устойчивости, ясности и опоры не прибавляется.
       </p>
 
-      <div style={{
-        background: "#141414", borderRadius: 14, padding: "18px 20px",
-        border: "1px solid #1E1E1E", marginBottom: 20
-      }}>
+      <div
+        style={{
+          background: "#141414",
+          borderRadius: 14,
+          padding: "18px 20px",
+          border: "1px solid #1E1E1E",
+          marginBottom: 20,
+        }}
+      >
         <p style={{ fontSize: 15, lineHeight: 1.55, color: "#D6D6D6" }}>
           За 2 минуты поймёшь, где у тебя главный стопор роста — и получишь персональный результат с понятным следующим шагом.
         </p>
       </div>
 
-      <div style={{
-        background: "#141414", borderRadius: 14, padding: "18px 20px",
-        border: "1px solid #1E1E1E", marginBottom: 20
-      }}>
+      <div
+        style={{
+          background: "#141414",
+          borderRadius: 14,
+          padding: "18px 20px",
+          border: "1px solid #1E1E1E",
+          marginBottom: 20,
+        }}
+      >
         {[
           "Где у тебя сейчас утекают клиенты, деньги и силы",
           "Что именно тормозит рост: поток, продажа, хаос или всё держится на тебе",
           "С чего начать, чтобы пошёл сдвиг",
         ].map((t, i) => (
-          <div key={i} style={{
-            display: "flex", gap: 12, alignItems: "flex-start",
-            padding: "8px 0",
-            borderBottom: i < 2 ? "1px solid #1A1A1A" : "none"
-          }}>
-            <div style={{
-              width: 20, height: 20, borderRadius: 6, marginTop: 1,
-              background: "#FF6B4A18", display: "flex", flexShrink: 0,
-              alignItems: "center", justifyContent: "center"
-            }}>
+          <div
+            key={i}
+            style={{
+              display: "flex",
+              gap: 12,
+              alignItems: "flex-start",
+              padding: "8px 0",
+              borderBottom: i < 2 ? "1px solid #1A1A1A" : "none",
+            }}
+          >
+            <div
+              style={{
+                width: 20,
+                height: 20,
+                borderRadius: 6,
+                marginTop: 1,
+                background: "#FF6B4A18",
+                display: "flex",
+                flexShrink: 0,
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
               <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#FF6B4A" }} />
             </div>
             <span style={{ fontSize: 14, color: "#C8C8C8", lineHeight: 1.5 }}>{t}</span>
@@ -267,10 +364,15 @@ function StartScreen({ onStart }) {
         ))}
       </div>
 
-      <div style={{
-        background: "#121212", borderRadius: 14, padding: "16px 18px",
-        border: "1px solid #1E1E1E", marginBottom: 24
-      }}>
+      <div
+        style={{
+          background: "#121212",
+          borderRadius: 14,
+          padding: "16px 18px",
+          border: "1px solid #1E1E1E",
+          marginBottom: 24,
+        }}
+      >
         <p style={{ fontSize: 13, color: "#D0D0D0", fontWeight: 600, marginBottom: 4 }}>
           Диагностику проводит Андрей Совко
         </p>
@@ -281,18 +383,35 @@ function StartScreen({ onStart }) {
         </p>
       </div>
 
-      <button onClick={onStart} style={{
-        width: "100%", padding: "18px 0", borderRadius: 14,
-        background: "#FF6B4A", color: "#fff", fontSize: 17,
-        fontWeight: 700, border: "none", cursor: "pointer",
-        letterSpacing: 0.3, position: "relative", overflow: "hidden"
-      }}>
+      <button
+        onClick={onStart}
+        style={{
+          width: "100%",
+          padding: "18px 0",
+          borderRadius: 14,
+          background: "#FF6B4A",
+          color: "#fff",
+          fontSize: 17,
+          fontWeight: 700,
+          border: "none",
+          cursor: "pointer",
+          letterSpacing: 0.3,
+          position: "relative",
+          overflow: "hidden",
+        }}
+      >
         Пройти диагностику
       </button>
-      <p style={{
-        fontSize: 12, color: "#555", textAlign: "center", marginTop: 12,
-        lineHeight: 1.5
-      }}>
+
+      <p
+        style={{
+          fontSize: 12,
+          color: "#555",
+          textAlign: "center",
+          marginTop: 12,
+          lineHeight: 1.5,
+        }}
+      >
         6 коротких вопросов · 2 минуты
         <br />
         После результата я лично разберу твои ответы в Telegram. Не автоворонка.
@@ -308,93 +427,137 @@ function QuizScreen({ question, index, total, onAnswer, onBack }) {
   useEffect(() => {
     setSelected([]);
     setV(false);
-    setTimeout(() => setV(true), 50);
+    const t = setTimeout(() => setV(true), 50);
+    return () => clearTimeout(t);
   }, [index]);
 
   const toggle = (i) => {
-    setSelected(prev =>
-      prev.includes(i) ? prev.filter(x => x !== i) : [...prev, i]
-    );
+    setSelected((prev) => (prev.includes(i) ? prev.filter((x) => x !== i) : [...prev, i]));
   };
 
   const handleNext = () => {
     if (selected.length === 0) return;
-    const chosen = selected.map(i => question.opts[i]);
+    const chosen = selected.map((i) => question.opts[i]);
     onAnswer(chosen);
   };
 
   const progress = (index / total) * 100;
 
   return (
-    <div style={{
-      minHeight: "100dvh", display: "flex", flexDirection: "column",
-      padding: "20px 20px 32px",
-      opacity: v ? 1 : 0, transform: v ? "none" : "translateX(30px)",
-      transition: "all 0.35s ease"
-    }}>
-      {/* Header */}
+    <div
+      style={{
+        minHeight: "100dvh",
+        display: "flex",
+        flexDirection: "column",
+        padding: "20px 20px 32px",
+        opacity: v ? 1 : 0,
+        transform: v ? "none" : "translateX(30px)",
+        transition: "all 0.35s ease",
+      }}
+    >
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 6 }}>
         {index > 0 && (
-          <button onClick={onBack} style={{
-            background: "none", border: "none", color: "#666",
-            fontSize: 14, cursor: "pointer", padding: "4px 0"
-          }}>← назад</button>
+          <button
+            onClick={onBack}
+            style={{
+              background: "none",
+              border: "none",
+              color: "#666",
+              fontSize: 14,
+              cursor: "pointer",
+              padding: "4px 0",
+            }}
+          >
+            ← назад
+          </button>
         )}
         <div style={{ flex: 1 }} />
-        <span style={{ fontSize: 12, color: "#555" }}>{index + 1} / {total}</span>
+        <span style={{ fontSize: 12, color: "#555" }}>
+          {index + 1} / {total}
+        </span>
       </div>
 
-      {/* Progress */}
-      <div style={{
-        height: 3, background: "#1A1A1A", borderRadius: 2,
-        overflow: "hidden", marginBottom: 28
-      }}>
-        <div style={{
-          height: "100%", background: "#FF6B4A", borderRadius: 2,
-          width: `${progress}%`, transition: "width 0.4s ease"
-        }} />
+      <div
+        style={{
+          height: 3,
+          background: "#1A1A1A",
+          borderRadius: 2,
+          overflow: "hidden",
+          marginBottom: 28,
+        }}
+      >
+        <div
+          style={{
+            height: "100%",
+            background: "#FF6B4A",
+            borderRadius: 2,
+            width: `${progress}%`,
+            transition: "width 0.4s ease",
+          }}
+        />
       </div>
 
-      {/* Question */}
-      <h2 style={{
-        fontSize: 22, lineHeight: 1.3, fontWeight: 700,
-        color: "#F5F5F0", marginBottom: 6
-      }}>
+      <h2
+        style={{
+          fontSize: 22,
+          lineHeight: 1.3,
+          fontWeight: 700,
+          color: "#F5F5F0",
+          marginBottom: 6,
+        }}
+      >
         {question.q}
       </h2>
       <p style={{ fontSize: 13, color: "#555", marginBottom: 24 }}>
         {question.qual ? "Выбери один вариант" : "Можно выбрать несколько"}
       </p>
 
-      {/* Options */}
       <div style={{ display: "flex", flexDirection: "column", gap: 10, flex: 1 }}>
         {question.opts.map((opt, i) => {
           const active = selected.includes(i);
           return (
-            <button key={i} onClick={() => {
-              if (question.qual) {
-                setSelected([i]);
-                setTimeout(() => onAnswer([question.opts[i]]), 350);
-              } else {
-                toggle(i);
-              }
-            }} style={{
-              width: "100%", textAlign: "left", padding: "14px 16px",
-              borderRadius: 12, border: "1.5px solid",
-              borderColor: active ? "#FF6B4A" : "#222",
-              background: active ? "#FF6B4A10" : "#111",
-              color: active ? "#FF6B4A" : "#C8C8C8",
-              fontSize: 15, lineHeight: 1.45, cursor: "pointer",
-              transition: "all 0.2s ease", display: "flex",
-              alignItems: "center", gap: 12
-            }}>
-              <div style={{
-                width: 22, height: 22, borderRadius: 6, flexShrink: 0,
-                border: `1.5px solid ${active ? "#FF6B4A" : "#333"}`,
-                background: active ? "#FF6B4A" : "transparent",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                transition: "all 0.2s ease"
-              }}>
+            <button
+              key={i}
+              onClick={() => {
+                if (question.qual) {
+                  setSelected([i]);
+                  setTimeout(() => onAnswer([question.opts[i]]), 350);
+                } else {
+                  toggle(i);
+                }
+              }}
+              style={{
+                width: "100%",
+                textAlign: "left",
+                padding: "14px 16px",
+                borderRadius: 12,
+                border: "1.5px solid",
+                borderColor: active ? "#FF6B4A" : "#222",
+                background: active ? "#FF6B4A10" : "#111",
+                color: active ? "#FF6B4A" : "#C8C8C8",
+                fontSize: 15,
+                lineHeight: 1.45,
+                cursor: "pointer",
+                transition: "all 0.2s ease",
+                display: "flex",
+                alignItems: "center",
+                gap: 12,
+              }}
+            >
+              <div
+                style={{
+                  width: 22,
+                  height: 22,
+                  borderRadius: 6,
+                  flexShrink: 0,
+                  border: `1.5px solid ${active ? "#FF6B4A" : "#333"}`,
+                  background: active ? "#FF6B4A" : "transparent",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  transition: "all 0.2s ease",
+                }}
+              >
                 {active && <span style={{ color: "#fff", fontSize: 13, fontWeight: 700 }}>✓</span>}
               </div>
               {opt.text}
@@ -403,16 +566,24 @@ function QuizScreen({ question, index, total, onAnswer, onBack }) {
         })}
       </div>
 
-      {/* Next button (for multi-select questions) */}
       {!question.qual && (
-        <button onClick={handleNext} disabled={selected.length === 0} style={{
-          width: "100%", padding: "16px 0", borderRadius: 14, marginTop: 20,
-          background: selected.length === 0 ? "#222" : "#FF6B4A",
-          color: selected.length === 0 ? "#555" : "#fff",
-          fontSize: 16, fontWeight: 600, border: "none",
-          cursor: selected.length === 0 ? "default" : "pointer",
-          transition: "all 0.25s ease"
-        }}>
+        <button
+          onClick={handleNext}
+          disabled={selected.length === 0}
+          style={{
+            width: "100%",
+            padding: "16px 0",
+            borderRadius: 14,
+            marginTop: 20,
+            background: selected.length === 0 ? "#222" : "#FF6B4A",
+            color: selected.length === 0 ? "#555" : "#fff",
+            fontSize: 16,
+            fontWeight: 600,
+            border: "none",
+            cursor: selected.length === 0 ? "default" : "pointer",
+            transition: "all 0.25s ease",
+          }}
+        >
           Далее
         </button>
       )}
@@ -423,15 +594,17 @@ function QuizScreen({ question, index, total, onAnswer, onBack }) {
 function CycleVisual({ color }) {
   const items = ["Перегрев", "Кривые решения", "Потеря денег", "Тревога и ручной режим"];
   return (
-    <div style={{
-      position: "relative", width: 240, height: 240,
-      margin: "10px auto 16px"
-    }}>
-      {/* Circle path */}
+    <div
+      style={{
+        position: "relative",
+        width: 240,
+        height: 240,
+        margin: "10px auto 16px",
+      }}
+    >
       <svg width="240" height="240" viewBox="0 0 240 240" style={{ position: "absolute" }}>
         <circle cx="120" cy="120" r="90" fill="none" stroke="#1E1E1E" strokeWidth="1.5" />
-        {/* Arrows on the circle */}
-        {[0, 1, 2, 3].map(i => {
+        {[0, 1, 2, 3].map((i) => {
           const angle = (i * 90 - 45) * Math.PI / 180;
           const x = 120 + 90 * Math.cos(angle);
           const y = 120 + 90 * Math.sin(angle);
@@ -443,7 +616,7 @@ function CycleVisual({ color }) {
           );
         })}
       </svg>
-      {/* Labels */}
+
       {items.map((item, i) => {
         const positions = [
           { top: 4, left: "50%", transform: "translateX(-50%)" },
@@ -452,20 +625,33 @@ function CycleVisual({ color }) {
           { top: "50%", left: -10, transform: "translateY(-50%)" },
         ];
         return (
-          <div key={i} style={{
-            position: "absolute", ...positions[i],
-            background: "#0A0A0A", padding: "4px 10px", borderRadius: 8,
-            border: `1px solid ${color}30`, maxWidth: 110, textAlign: "center"
-          }}>
+          <div
+            key={i}
+            style={{
+              position: "absolute",
+              ...positions[i],
+              background: "#0A0A0A",
+              padding: "4px 10px",
+              borderRadius: 8,
+              border: `1px solid ${color}30`,
+              maxWidth: 110,
+              textAlign: "center",
+            }}
+          >
             <span style={{ fontSize: 11, color: "#C0C0C0", lineHeight: 1.3 }}>{item}</span>
           </div>
         );
       })}
-      {/* Center text */}
-      <div style={{
-        position: "absolute", top: "50%", left: "50%",
-        transform: "translate(-50%, -50%)", textAlign: "center"
-      }}>
+
+      <div
+        style={{
+          position: "absolute",
+          top: "50%",
+          left: "50%",
+          transform: "translate(-50%, -50%)",
+          textAlign: "center",
+        }}
+      >
         <span style={{ fontSize: 20 }}>🔄</span>
       </div>
     </div>
@@ -475,45 +661,87 @@ function CycleVisual({ color }) {
 function ResultScreen({ result, userName, onContinueTelegram }) {
   const r = RESULTS[result];
   const [v, setV] = useState(false);
-  useEffect(() => { setTimeout(() => setV(true), 100); }, []);
+
+  useEffect(() => {
+    const t = setTimeout(() => setV(true), 100);
+    return () => clearTimeout(t);
+  }, []);
 
   return (
-    <div style={{
-      minHeight: "100dvh", padding: "28px 20px 48px",
-      opacity: v ? 1 : 0, transition: "opacity 0.6s ease"
-    }}>
-      {/* Tag */}
-      <div style={{
-        display: "inline-block", padding: "5px 14px", borderRadius: 8,
-        background: `${r.color}15`, border: `1px solid ${r.color}25`,
-        marginBottom: 16
-      }}>
-        <span style={{
-          fontSize: 11, fontWeight: 700, color: r.color,
-          letterSpacing: 2, textTransform: "uppercase"
-        }}>{r.tag}</span>
+    <div
+      style={{
+        minHeight: "100dvh",
+        padding: "28px 20px 48px",
+        opacity: v ? 1 : 0,
+        transition: "opacity 0.6s ease",
+      }}
+    >
+      <div
+        style={{
+          display: "inline-block",
+          padding: "5px 14px",
+          borderRadius: 8,
+          background: `${r.color}15`,
+          border: `1px solid ${r.color}25`,
+          marginBottom: 16,
+        }}
+      >
+        <span
+          style={{
+            fontSize: 11,
+            fontWeight: 700,
+            color: r.color,
+            letterSpacing: 2,
+            textTransform: "uppercase",
+          }}
+        >
+          {r.tag}
+        </span>
       </div>
 
-      {/* Title */}
-      <h1 style={{
-        fontSize: 26, lineHeight: 1.2, fontWeight: 800,
-        color: "#F5F5F0", marginBottom: 8
-      }}>
+      <h1
+        style={{
+          fontSize: 26,
+          lineHeight: 1.2,
+          fontWeight: 800,
+          color: "#F5F5F0",
+          marginBottom: 8,
+        }}
+      >
         {userName ? `${userName}, ${r.title.charAt(0).toLowerCase() + r.title.slice(1)}` : r.title}
       </h1>
-      <p style={{
-        fontSize: 15, color: "#888", lineHeight: 1.5, marginBottom: 28
-      }}>{r.subtitle}</p>
+      <p
+        style={{
+          fontSize: 15,
+          color: "#888",
+          lineHeight: 1.5,
+          marginBottom: 28,
+        }}
+      >
+        {r.subtitle}
+      </p>
 
-      {/* Знакомая картина */}
-      <div style={{
-        background: "#111", borderRadius: 14, padding: "20px 18px",
-        border: "1px solid #1A1A1A", marginBottom: 16
-      }}>
-        <h3 style={{
-          fontSize: 12, fontWeight: 700, color: "#555",
-          textTransform: "uppercase", letterSpacing: 2, marginBottom: 14
-        }}>Знакомая картина?</h3>
+      <div
+        style={{
+          background: "#111",
+          borderRadius: 14,
+          padding: "20px 18px",
+          border: "1px solid #1A1A1A",
+          marginBottom: 16,
+        }}
+      >
+        <h3
+          style={{
+            fontSize: 12,
+            fontWeight: 700,
+            color: "#555",
+            textTransform: "uppercase",
+            letterSpacing: 2,
+            marginBottom: 14,
+          }}
+        >
+          Знакомая картина?
+        </h3>
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {r.familiar.map((f, i) => (
             <div key={i} style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
@@ -524,33 +752,63 @@ function ResultScreen({ result, userName, onContinueTelegram }) {
         </div>
       </div>
 
-      {/* Замкнутый круг */}
-      <div style={{
-        background: "#111", borderRadius: 14, padding: "20px 18px",
-        border: "1px solid #1A1A1A", marginBottom: 16
-      }}>
-        <h3 style={{
-          fontSize: 12, fontWeight: 700, color: "#555",
-          textTransform: "uppercase", letterSpacing: 2, marginBottom: 8
-        }}>Замкнутый круг</h3>
+      <div
+        style={{
+          background: "#111",
+          borderRadius: 14,
+          padding: "20px 18px",
+          border: "1px solid #1A1A1A",
+          marginBottom: 16,
+        }}
+      >
+        <h3
+          style={{
+            fontSize: 12,
+            fontWeight: 700,
+            color: "#555",
+            textTransform: "uppercase",
+            letterSpacing: 2,
+            marginBottom: 8,
+          }}
+        >
+          Замкнутый круг
+        </h3>
         <CycleVisual color={r.color} />
-        <p style={{
-          fontSize: 14, color: r.color, fontWeight: 500, textAlign: "center",
-          fontStyle: "italic", lineHeight: 1.5
-        }}>
+        <p
+          style={{
+            fontSize: 14,
+            color: r.color,
+            fontWeight: 500,
+            textAlign: "center",
+            fontStyle: "italic",
+            lineHeight: 1.5,
+          }}
+        >
           Пока ты внутри этого круга — ты всё время чинишь не то место.
         </p>
       </div>
 
-      {/* Что пробовал */}
-      <div style={{
-        background: "#111", borderRadius: 14, padding: "20px 18px",
-        border: "1px solid #1A1A1A", marginBottom: 16
-      }}>
-        <h3 style={{
-          fontSize: 12, fontWeight: 700, color: "#555",
-          textTransform: "uppercase", letterSpacing: 2, marginBottom: 14
-        }}>Что ты уже пробовал</h3>
+      <div
+        style={{
+          background: "#111",
+          borderRadius: 14,
+          padding: "20px 18px",
+          border: "1px solid #1A1A1A",
+          marginBottom: 16,
+        }}
+      >
+        <h3
+          style={{
+            fontSize: 12,
+            fontWeight: 700,
+            color: "#555",
+            textTransform: "uppercase",
+            letterSpacing: 2,
+            marginBottom: 14,
+          }}
+        >
+          Что ты уже пробовал
+        </h3>
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {r.tried.map(([what, why], i) => (
             <div key={i} style={{ fontSize: 14, lineHeight: 1.5 }}>
@@ -560,22 +818,39 @@ function ResultScreen({ result, userName, onContinueTelegram }) {
             </div>
           ))}
         </div>
-        <p style={{
-          fontSize: 13, color: "#777", marginTop: 14, fontStyle: "italic"
-        }}>
+        <p
+          style={{
+            fontSize: 13,
+            color: "#777",
+            marginTop: 14,
+            fontStyle: "italic",
+          }}
+        >
           Проблема не в инструментах. Проблема — чинили куски, а не связку.
         </p>
       </div>
 
-      {/* Метод */}
-      <div style={{
-        background: "#111", borderRadius: 14, padding: "20px 18px",
-        border: "1px solid #1A1A1A", marginBottom: 16
-      }}>
-        <h3 style={{
-          fontSize: 12, fontWeight: 700, color: "#555",
-          textTransform: "uppercase", letterSpacing: 2, marginBottom: 14
-        }}>Почему ломается всё сразу</h3>
+      <div
+        style={{
+          background: "#111",
+          borderRadius: 14,
+          padding: "20px 18px",
+          border: "1px solid #1A1A1A",
+          marginBottom: 16,
+        }}
+      >
+        <h3
+          style={{
+            fontSize: 12,
+            fontWeight: 700,
+            color: "#555",
+            textTransform: "uppercase",
+            letterSpacing: 2,
+            marginBottom: 14,
+          }}
+        >
+          Почему ломается всё сразу
+        </h3>
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           <div>
             <p style={{ fontSize: 12, color: r.color, fontWeight: 700, marginBottom: 5 }}>ВНУТРЕННИЙ КОНТУР</p>
@@ -590,64 +865,125 @@ function ResultScreen({ result, userName, onContinueTelegram }) {
             </p>
           </div>
         </div>
-        <p style={{
-          fontSize: 14, color: "#999", marginTop: 14, lineHeight: 1.6
-        }}>
+        <p
+          style={{
+            fontSize: 14,
+            color: "#999",
+            marginTop: 14,
+            lineHeight: 1.6,
+          }}
+        >
           Когда оба контура перегружены — они ломают друг друга. Именно поэтому отдельно психолог, маркетолог, трекер — не дают устойчивого результата.
         </p>
       </div>
 
-      {/* Цена бездействия */}
-      <div style={{
-        background: "#111", borderRadius: 14, padding: "20px 18px",
-        border: `1px solid ${r.color}20`, marginBottom: 16
-      }}>
-        <h3 style={{
-          fontSize: 12, fontWeight: 700, color: "#555",
-          textTransform: "uppercase", letterSpacing: 2, marginBottom: 16
-        }}>Цена бездействия</h3>
+      <div
+        style={{
+          background: "#111",
+          borderRadius: 14,
+          padding: "20px 18px",
+          border: `1px solid ${r.color}20`,
+          marginBottom: 16,
+        }}
+      >
+        <h3
+          style={{
+            fontSize: 12,
+            fontWeight: 700,
+            color: "#555",
+            textTransform: "uppercase",
+            letterSpacing: 2,
+            marginBottom: 16,
+          }}
+        >
+          Цена бездействия
+        </h3>
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           {r.scenes.map((scene, i) => (
-            <div key={i} style={{
-              paddingLeft: 14, borderLeft: `2px solid ${r.color}40`
-            }}>
-              <p style={{
-                fontSize: 14, color: "#B0B0B0", lineHeight: 1.6, fontStyle: "italic"
-              }}>{scene}</p>
+            <div
+              key={i}
+              style={{
+                paddingLeft: 14,
+                borderLeft: `2px solid ${r.color}40`,
+              }}
+            >
+              <p
+                style={{
+                  fontSize: 14,
+                  color: "#B0B0B0",
+                  lineHeight: 1.6,
+                  fontStyle: "italic",
+                }}
+              >
+                {scene}
+              </p>
             </div>
           ))}
         </div>
-        <p style={{
-          fontSize: 14, color: r.color, fontWeight: 600, marginTop: 18
-        }}>
+        <p
+          style={{
+            fontSize: 14,
+            color: r.color,
+            fontWeight: 600,
+            marginTop: 18,
+          }}
+        >
           Это не слабость. Это цена, которую ты платишь каждый месяц, пока главный узел не найден.
         </p>
       </div>
 
-      {/* С чего начинают */}
-      <div style={{
-        background: "#111", borderRadius: 14, padding: "20px 18px",
-        border: "1px solid #1A1A1A", marginBottom: 28
-      }}>
-        <h3 style={{
-          fontSize: 12, fontWeight: 700, color: "#555",
-          textTransform: "uppercase", letterSpacing: 2, marginBottom: 14
-        }}>С чего начинают те, у кого потом сдвиг</h3>
+      <div
+        style={{
+          background: "#111",
+          borderRadius: 14,
+          padding: "20px 18px",
+          border: "1px solid #1A1A1A",
+          marginBottom: 28,
+        }}
+      >
+        <h3
+          style={{
+            fontSize: 12,
+            fontWeight: 700,
+            color: "#555",
+            textTransform: "uppercase",
+            letterSpacing: 2,
+            marginBottom: 14,
+          }}
+        >
+          С чего начинают те, у кого потом сдвиг
+        </h3>
         {[
           ["1", "Перестают чинить всё подряд", "Находят один главный узел"],
           ["2", "Чинят связку, а не куски", "Внутреннее и внешнее вместе"],
           ["3", "Начинают с первого узла", "Один ремонт, один сдвиг"],
         ].map(([n, title, sub]) => (
-          <div key={n} style={{
-            display: "flex", gap: 12, padding: "8px 0",
-            borderBottom: n !== "3" ? "1px solid #1A1A1A" : "none"
-          }}>
-            <div style={{
-              width: 28, height: 28, borderRadius: 8,
-              background: `${r.color}12`, display: "flex",
-              alignItems: "center", justifyContent: "center",
-              fontSize: 13, fontWeight: 800, color: r.color, flexShrink: 0
-            }}>{n}</div>
+          <div
+            key={n}
+            style={{
+              display: "flex",
+              gap: 12,
+              padding: "8px 0",
+              borderBottom: n !== "3" ? "1px solid #1A1A1A" : "none",
+            }}
+          >
+            <div
+              style={{
+                width: 28,
+                height: 28,
+                borderRadius: 8,
+                background: `${r.color}12`,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: 13,
+                fontWeight: 800,
+                color: r.color,
+                flexShrink: 0,
+              }}
+            >
+              {n}
+            </div>
             <div>
               <p style={{ fontSize: 14, color: "#D0D0D0", fontWeight: 600 }}>{title}</p>
               <p style={{ fontSize: 13, color: "#777" }}>{sub}</p>
@@ -656,39 +992,74 @@ function ResultScreen({ result, userName, onContinueTelegram }) {
         ))}
       </div>
 
-      {/* CTA */}
-      <div style={{
-        background: "#141414", borderRadius: 18, padding: "28px 22px",
-        border: `1px solid ${r.color}20`, textAlign: "center"
-      }}>
-        <h3 style={{
-          fontSize: 20, fontWeight: 800, color: "#F5F5F0", marginBottom: 8
-        }}>Личный разбор</h3>
-        <p style={{
-          fontSize: 14, color: "#888", lineHeight: 1.6, marginBottom: 22
-        }}>
+      <div
+        style={{
+          background: "#141414",
+          borderRadius: 18,
+          padding: "28px 22px",
+          border: `1px solid ${r.color}20`,
+          textAlign: "center",
+        }}
+      >
+        <h3
+          style={{
+            fontSize: 20,
+            fontWeight: 800,
+            color: "#F5F5F0",
+            marginBottom: 8,
+          }}
+        >
+          Личный разбор
+        </h3>
+        <p
+          style={{
+            fontSize: 14,
+            color: "#888",
+            lineHeight: 1.6,
+            marginBottom: 22,
+          }}
+        >
           30–40 минут. Найдём главный узел, покажу что чинить первым. В конце скажу, есть ли смысл идти глубже.
         </p>
 
-        <button onClick={onContinueTelegram} style={{
-          display: "block", width: "100%", padding: "17px 0", borderRadius: 14,
-          background: r.color, color: "#fff", fontSize: 17,
-          fontWeight: 700, textDecoration: "none", border: "none",
-          boxShadow: `0 6px 28px ${r.color}35`, cursor: "pointer"
-        }}>
+        <button
+          onClick={onContinueTelegram}
+          style={{
+            display: "block",
+            width: "100%",
+            padding: "17px 0",
+            borderRadius: 14,
+            background: r.color,
+            color: "#fff",
+            fontSize: 17,
+            fontWeight: 700,
+            textDecoration: "none",
+            border: "none",
+            boxShadow: `0 6px 28px ${r.color}35`,
+            cursor: "pointer",
+          }}
+        >
           Получить углублённый разбор в Telegram
         </button>
 
-        <div style={{
-          marginTop: 22, paddingTop: 18,
-          borderTop: "1px solid #222"
-        }}>
+        <div
+          style={{
+            marginTop: 22,
+            paddingTop: 18,
+            borderTop: "1px solid #222",
+          }}
+        >
           <p style={{ fontSize: 12, color: "#555", lineHeight: 1.7 }}>
             <span style={{ color: "#888", fontWeight: 600 }}>Андрей Совко.</span> Чемпион мира WPC. Бывший управляющий партнёр EdTech в топ-1% рынка, команда 150 чел. 100+ проектов в консалтинге.
           </p>
-          <p style={{
-            fontSize: 12, color: r.color, marginTop: 8, fontStyle: "italic"
-          }}>
+          <p
+            style={{
+              fontSize: 12,
+              color: r.color,
+              marginTop: 8,
+              fontStyle: "italic",
+            }}
+          >
             Я сам смотрю каждую анкету. Это не автоворонка.
           </p>
         </div>
@@ -725,36 +1096,37 @@ export default function App() {
 
   const handleStart = () => setScreen("quiz");
 
-const handleAnswer = (chosen) => {
-  const newAnswers = [...answers];
-  newAnswers[qIndex] = chosen.map(o => o.text);
+  const handleAnswer = (chosen) => {
+    const newAnswers = [...answers];
+    newAnswers[qIndex] = chosen.map((o) => o.text);
 
-  let nextScores = scores;
-  if (!QUESTIONS[qIndex].qual) {
-    nextScores = { ...scores };
-    chosen.forEach(o => { nextScores[o.s] = (nextScores[o.s] || 0) + 1; });
-    setScores(nextScores);
-  }
+    let nextScores = scores;
+    if (!QUESTIONS[qIndex].qual) {
+      nextScores = { ...scores };
+      chosen.forEach((o) => {
+        nextScores[o.s] = (nextScores[o.s] || 0) + 1;
+      });
+      setScores(nextScores);
+    }
 
-  setAnswers(newAnswers);
+    setAnswers(newAnswers);
 
-  if (qIndex < QUESTIONS.length - 1) {
-    setQIndex(qIndex + 1);
-  } else {
-    const r = getResult(nextScores);
-    setResult(r);
-    setScreen("result");
-  }
-};
+    if (qIndex < QUESTIONS.length - 1) {
+      setQIndex(qIndex + 1);
+    } else {
+      const r = getResult(nextScores);
+      setResult(r);
+      setScreen("result");
+    }
+  };
 
   const handleBack = () => {
     if (qIndex > 0) {
-      // Откатываем скоринг предыдущего вопроса
       const prevQ = QUESTIONS[qIndex - 1];
       if (!prevQ.qual && answers[qIndex - 1]) {
         const newScores = { ...scores };
         const prevAnswerTexts = answers[qIndex - 1];
-        prevQ.opts.forEach(o => {
+        prevQ.opts.forEach((o) => {
           if (prevAnswerTexts.includes(o.text)) {
             newScores[o.s] = Math.max(0, (newScores[o.s] || 0) - 1);
           }
@@ -765,34 +1137,45 @@ const handleAnswer = (chosen) => {
     }
   };
 
-const handleContinueTelegram = () => {
-  const qualification = answers.find((_, idx) => QUESTIONS[idx]?.qual)?.[0] || null;
-  const payload = buildQuizPayload({
-    result,
-    scores,
-    answers,
-    qualification,
-    userName,
-  });
+  const handleContinueTelegram = () => {
+    const qualification = answers.find((_, idx) => QUESTIONS[idx]?.qual)?.[0] || null;
 
-  try {
-    if (IS_TG && TG?.sendData) {
-      TG.sendData(JSON.stringify(payload));
+    const payload = buildQuizPayload({
+      result,
+      scores,
+      answers,
+      qualification,
+      userName,
+    });
+
+    try {
+      if (IS_TG && TG?.sendData) {
+        TG.sendData(JSON.stringify(payload));
+
+        setTimeout(() => {
+          openTelegramBot();
+        }, 250);
+      } else {
+        openTelegramBot();
+      }
+    } catch (e) {
+      console.log("sendData error", e);
+      openTelegramBot();
     }
-  } catch (e) {
-    console.log("sendData error", e);
-  }
-
-  openTelegramBot();
-};
+  };
 
   return (
-    <div style={{
-      background: "#0A0A0A", color: "#F5F5F0", minHeight: "100dvh",
-      fontFamily: "'SF Pro Display', -apple-system, 'Segoe UI', sans-serif",
-      maxWidth: 480, margin: "0 auto",
-      WebkitFontSmoothing: "antialiased"
-    }}>
+    <div
+      style={{
+        background: "#0A0A0A",
+        color: "#F5F5F0",
+        minHeight: "100dvh",
+        fontFamily: "'SF Pro Display', -apple-system, 'Segoe UI', sans-serif",
+        maxWidth: 480,
+        margin: "0 auto",
+        WebkitFontSmoothing: "antialiased",
+      }}
+    >
       {screen === "start" && <StartScreen onStart={handleStart} />}
       {screen === "quiz" && (
         <QuizScreen
@@ -803,7 +1186,9 @@ const handleContinueTelegram = () => {
           onBack={handleBack}
         />
       )}
-            {screen === "result" && <ResultScreen result={result} userName={userName} onContinueTelegram={handleContinueTelegram} />}
+      {screen === "result" && (
+        <ResultScreen result={result} userName={userName} onContinueTelegram={handleContinueTelegram} />
+      )}
     </div>
   );
 }
