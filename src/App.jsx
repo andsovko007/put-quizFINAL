@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 // ========== НАСТРОЙКИ ==========
 const TG = window.Telegram?.WebApp;
@@ -701,6 +701,8 @@ function CycleVisual({ color }) {
 function ResultScreen({ result, userName, resultPayload, onContinueTelegram }) {
   const r = RESULTS[result];
   const [v, setV] = useState(false);
+  const [secondsLeft, setSecondsLeft] = useState(40);
+  const timerStartedRef = useRef(false);
 
   useEffect(() => {
     const t = setTimeout(() => setV(true), 100);
@@ -709,7 +711,26 @@ function ResultScreen({ result, userName, resultPayload, onContinueTelegram }) {
 
   useEffect(() => {
     if (!resultPayload) return;
-    sendResultToBotOnce(resultPayload);
+    if (!IS_TG || !TG?.sendData) return;
+    if (isResultAlreadySent()) return;
+    if (timerStartedRef.current) return;
+
+    timerStartedRef.current = true;
+
+    const intervalId = window.setInterval(() => {
+      setSecondsLeft((prev) => {
+        if (prev <= 1) {
+          window.clearInterval(intervalId);
+          sendResultToBotOnce(resultPayload);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
   }, [resultPayload]);
 
   return (
@@ -1061,11 +1082,24 @@ function ResultScreen({ result, userName, resultPayload, onContinueTelegram }) {
             fontSize: 14,
             color: "#888",
             lineHeight: 1.6,
-            marginBottom: 22,
+            marginBottom: 14,
           }}
         >
           30–40 минут. Найдём главный узел, покажу что чинить первым. В конце скажу, есть ли смысл идти глубже.
         </p>
+
+        {IS_TG && !isResultAlreadySent() && (
+          <p
+            style={{
+              fontSize: 12,
+              color: "#777",
+              lineHeight: 1.5,
+              marginBottom: 18,
+            }}
+          >
+            Если ничего не нажать, результат автоматически отправится в Telegram через {secondsLeft} сек.
+          </p>
+        )}
 
         <button
           onClick={onContinueTelegram}
@@ -1226,13 +1260,18 @@ export default function App() {
         />
       )}
       {screen === "result" && (
-        <ResultScreen result={result} userName={userName} resultPayload={buildQuizPayload({
-          result,
-          scores,
-          answers,
-          qualification: answers.find((_, idx) => QUESTIONS[idx]?.qual)?.[0] || null,
-          userName,
-        })} onContinueTelegram={handleContinueTelegram} />
+        <ResultScreen
+          result={result}
+          userName={userName}
+          resultPayload={buildQuizPayload({
+            result,
+            scores,
+            answers,
+            qualification: answers.find((_, idx) => QUESTIONS[idx]?.qual)?.[0] || null,
+            userName,
+          })}
+          onContinueTelegram={handleContinueTelegram}
+        />
       )}
     </div>
   );
